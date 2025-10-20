@@ -4,6 +4,7 @@
   import { celestialBodies } from '$lib/data/celestialBodies.js';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+
   let container: HTMLDivElement | undefined;
   let selectedPlanet: any = null;
   let controls: OrbitControls;
@@ -15,7 +16,21 @@
   let mouseDownTime = 0;
   let isPaused = false;
   let timeSpeed = 1;
+  let showWelcome = true;
+  let showSidebar = false;
+  let planets: THREE.Mesh[] = [];
+  let sidebarTimeout: any = null;
 
+  function handleSidebarMouseEnter() {
+    if (sidebarTimeout) clearTimeout(sidebarTimeout);
+    showSidebar = true;
+ }
+
+ function handleSidebarMouseLeave() {
+  sidebarTimeout = setTimeout(() => {
+    showSidebar = false;
+    }, 300); 
+  }
 
   function onMouseDown() {
     isDragging = false;
@@ -88,9 +103,6 @@
     starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
-
-    // store planet meshes for interaction and animation
-    const planets: THREE.Mesh[] = [];
 
     // create celestial bodies
     const textureLoader = new THREE.TextureLoader();
@@ -284,6 +296,117 @@
 
 <div bind:this={container} class="scene-container"></div>
 
+<!-- welcome screen -->
+{#if showWelcome}
+  <div class="welcome-overlay">
+    <div class="welcome-content">
+      <h1>🌌 Interactive Solar System</h1>
+      <p class="tagline">Explore our cosmic neighborhood in 3D</p>
+      
+      <div class="welcome-features">
+        <div class="feature">
+          <span class="icon">🪐</span>
+          <h3>Realistic Planets</h3>
+          <p>High-quality textures from NASA imagery</p>
+        </div>
+        <div class="feature">
+          <span class="icon">🎮</span>
+          <h3>Interactive Controls</h3>
+          <p>Click, drag, zoom, and explore freely</p>
+        </div>
+        <div class="feature">
+          <span class="icon">⏱️</span>
+          <h3>Time Control</h3>
+          <p>Speed up or slow down orbital motion</p>
+        </div>
+      </div>
+
+      <button class="start-btn" on:click={() => showWelcome = false}>
+        Start Exploring →
+      </button>
+
+      <div class="credits">
+        <p>Built with SvelteKit & Three.js</p>
+        <p>Planet textures from <a href="https://planetpixelemporium.com" target="_blank">Planet Pixel Emporium</a></p>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- sidebar toggle button -->
+<button class="sidebar-toggle" on:mouseenter={handleSidebarMouseEnter}>ℹ️</button>
+
+<!-- sidebar panel (always rendered, no {#if}) -->
+<div 
+  class="sidebar" 
+  class:sidebar-open={showSidebar}
+  role="complementary" 
+  on:mouseenter={handleSidebarMouseEnter} 
+  on:mouseleave={handleSidebarMouseLeave}
+>
+  <h2>About This Project</h2>
+  
+  <div class="sidebar-section">
+    <h3>📖 Description</h3>
+    <p>An interactive 3D visualization of our solar system built with modern web technologies.</p>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>🎯 Features</h3>
+    <ul>
+      <li>Real planetary textures</li>
+      <li>Smooth camera controls</li>
+      <li>Time manipulation (0.5x - 10x speed)</li>
+      <li>Detailed planet information</li>
+      <li>Realistic orbital mechanics</li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>🛠️ Tech Stack</h3>
+    <div class="tech-badges">
+      <span class="badge">SvelteKit</span>
+      <span class="badge">Three.js</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">WebGL</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>🌍 Planets</h3>
+    <div class="planet-list">
+      {#each Object.entries(celestialBodies) as [key, body]}
+        <button class="planet-btn" on:click={() => {
+          const planet = planets.find(p => p.userData.key === key);
+          if (planet) {
+            selectedPlanet = planet.userData;
+            const targetPos = planet.position.clone();
+            const distance = planet.userData.radius * 4;
+            targetCameraPosition.set(
+              targetPos.x + distance,
+              targetPos.y + distance * 0.5,
+              targetPos.z + distance
+            );
+            targetLookAt.copy(targetPos);
+            isAnimatingCamera = true;
+            controls.enabled = false;
+          }
+        }}>
+          {body.name}
+        </button>
+      {/each}
+    </div>
+  </div>
+
+  <div class="sidebar-section credits-sidebar">
+    <h3>👨‍💻 Created By</h3>
+    <p>Matej Gyergyek</p>
+    <a href="https://github.com/IsxImattI/solar-system" target="_blank" class="github-link">
+      View on GitHub →
+    </a>
+  </div>
+</div>
+
 {#if selectedPlanet}
   <div class="info-panel">
     <h2>{selectedPlanet.name}</h2>
@@ -446,5 +569,275 @@
   color: white;
   font-size: 0.9rem;
   min-width: 120px;
+}
+
+/* welcome screen */
+.welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 5, 20, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.welcome-content {
+  max-width: 800px;
+  padding: 40px;
+  text-align: center;
+  color: white;
+}
+
+.welcome-content h1 {
+  font-size: 3rem;
+  margin: 0 0 10px 0;
+  background: linear-gradient(45deg, #fdb813, #ffc849, #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  margin-bottom: 40px;
+}
+
+.welcome-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin: 40px 0;
+}
+
+.feature {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feature .icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.feature h3 {
+  margin: 10px 0;
+  font-size: 1.1rem;
+}
+
+.feature p {
+  opacity: 0.8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.start-btn {
+  background: #fdb813;
+  color: #000;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 20px;
+}
+
+.start-btn:hover {
+  background: #ffc849;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(253, 184, 19, 0.3);
+}
+
+.credits {
+  margin-top: 40px;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.credits a {
+  color: #fdb813;
+  text-decoration: none;
+}
+
+.credits a:hover {
+  text-decoration: underline;
+}
+
+/* sidebar toggle */
+.sidebar-toggle {
+  position: fixed;
+  top: 20px; 
+  left: 20px;
+  background: rgba(0, 5, 20, 0.9);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  z-index: 100;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.sidebar-toggle:hover {
+  background: rgba(253, 184, 19, 0.9);
+  color: #000;
+}
+
+/* sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 100vh;
+  background: rgba(0, 5, 20, 0.95);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 60px 20px 20px 20px; 
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 99;
+  color: white;
+  transform: translateX(-100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-open {
+  transform: translateX(0);
+}
+
+@keyframes slideInSmooth {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.sidebar h2 {
+  margin: 0 0 20px 0;
+  color: #fdb813;
+  font-size: 1.5rem;
+}
+
+.sidebar-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #ffc849;
+}
+
+.sidebar-section p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.sidebar-section ul {
+  margin: 10px 0;
+  padding-left: 20px;
+  opacity: 0.9;
+}
+
+.sidebar-section li {
+  margin: 8px 0;
+}
+
+.tech-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.badge {
+  background: rgba(253, 184, 19, 0.2);
+  color: #fdb813;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  border: 1px solid rgba(253, 184, 19, 0.3);
+}
+
+.planet-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.planet-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.planet-btn:hover {
+  background: rgba(253, 184, 19, 0.2);
+  border-color: #fdb813;
+}
+
+.credits-sidebar {
+  border-bottom: none;
+}
+
+.github-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #fdb813;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.github-link:hover {
+  text-decoration: underline;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .welcome-features {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar {
+    width: 280px;
+  }
 }
 </style>
