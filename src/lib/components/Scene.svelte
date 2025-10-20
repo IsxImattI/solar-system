@@ -13,6 +13,8 @@
   let isAnimatingCamera = false;
   let isDragging = false;
   let mouseDownTime = 0;
+  let isPaused = false;
+  let timeSpeed = 1;
 
 
   function onMouseDown() {
@@ -222,17 +224,19 @@
       requestAnimationFrame(animate);
 
       // rotate and orbit planets
-      planets.forEach(planet => {
-        const data = planet.userData;
+      if (!isPaused) {
+        planets.forEach(planet => {
+            const data = planet.userData;
 
-        planet.rotation.y += data.rotationSpeed;
+            planet.rotation.y += data.rotationSpeed * timeSpeed;
 
-        if (data.distance > 0) {
-          data.angle += data.orbitSpeed;
-          planet.position.x = Math.cos(data.angle) * data.distance;
-          planet.position.z = Math.sin(data.angle) * data.distance;
-        }
-      });
+            if (data.distance > 0) {
+                data.angle += data.orbitSpeed * timeSpeed;
+                planet.position.x = Math.cos(data.angle) * data.distance;
+                planet.position.z = Math.sin(data.angle) * data.distance;
+            }
+        });
+      }
 
       // smooth camera animation
       if (isAnimatingCamera) {
@@ -291,10 +295,26 @@
     </ul>
     <button on:click={() => selectedPlanet = null}>Close</button>
   </div>
-  <div class="controls-hint">
+{/if}
+
+<div class="controls-hint">
     <p>🖱️ Left-click & drag to rotate • Scroll to zoom • Right-click & drag to pan</p>
   </div>
-{/if}
+  <div class="time-controls">
+  <button on:click={() => isPaused = !isPaused} class="play-pause-btn">
+    {isPaused ? '▶️' : '⏸️'}
+  </button>
+  
+  <div class="speed-controls">
+    <button on:click={() => timeSpeed = 0.5} class:active={timeSpeed === 0.5}>0.5x</button>
+    <button on:click={() => timeSpeed = 1} class:active={timeSpeed === 1}>1x</button>
+    <button on:click={() => timeSpeed = 2} class:active={timeSpeed === 2}>2x</button>
+    <button on:click={() => timeSpeed = 5} class:active={timeSpeed === 5}>5x</button>
+    <button on:click={() => timeSpeed = 10} class:active={timeSpeed === 10}>10x</button>
+  </div>
+  
+  <span class="speed-indicator">Speed: {timeSpeed}x {isPaused ? '(Paused)' : ''}</span>
+ </div>
 
 <style>
   .scene-container {
@@ -365,4 +385,66 @@
     margin: 0;
     opacity: 0.9;
   }
+
+  .time-controls {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background: rgba(0, 5, 20, 0.9);
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.play-pause-btn {
+  background: #fdb813;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+
+.play-pause-btn:hover {
+  background: #ffc849;
+}
+
+.speed-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.speed-controls button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.speed-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.speed-controls button.active {
+  background: #fdb813;
+  border-color: #fdb813;
+  font-weight: bold;
+}
+
+.speed-indicator {
+  color: white;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
 </style>
