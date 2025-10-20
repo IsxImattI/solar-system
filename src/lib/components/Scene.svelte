@@ -2,9 +2,27 @@
   import { onMount } from 'svelte';
   import * as THREE from 'three';
   import { celestialBodies } from '$lib/data/celestialBodies.js';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
   let container: HTMLDivElement | undefined;
   let selectedPlanet: any = null;
+  let controls: OrbitControls;
+  let camera: THREE.PerspectiveCamera;
+  let targetCameraPosition = new THREE.Vector3();
+  let targetLookAt = new THREE.Vector3();
+  let isAnimatingCamera = false;
+  let isDragging = false;
+  let mouseDownTime = 0;
+
+
+  function onMouseDown() {
+    isDragging = false;
+    mouseDownTime = Date.now();
+  }
+
+  function onMouseMove() {
+    isDragging = true;
+  }
 
   export function getSelectedPlanet() {
     return selectedPlanet;
@@ -16,7 +34,7 @@
     scene.background = new THREE.Color(0x000511);
 
     // camera setup
-    const camera = new THREE.PerspectiveCamera(
+    camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -29,6 +47,15 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     container?.appendChild(renderer.domElement);
+
+    // orbit controls
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 30;
+    controls.maxDistance = 800;
+    controls.enablePan = true;
+
     // lighting setup
     const ambientLight = new THREE.AmbientLight(0x333333);
     scene.add(ambientLight);
@@ -109,6 +136,10 @@
     const mouse = new THREE.Vector2();
 
     function onMouseClick(event: MouseEvent) {
+      // ignore clicks that were actually drags
+      const clickDuration = Date.now() - mouseDownTime;
+      if (isDragging || clickDuration > 200) return;
+
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -116,27 +147,36 @@
       const intersects = raycaster.intersectObjects(planets);
 
       if (intersects.length > 0) {
-        const clickedPlanet = intersects[0].object;
+        const clickedPlanet = intersects[0].object as THREE.Mesh;
         selectedPlanet = clickedPlanet.userData;
-        
-        // zoom to planet view
+
+        // set target for smooth camera transition
         const targetPos = clickedPlanet.position.clone();
         const distance = clickedPlanet.userData.radius * 4;
-        camera.position.set(
+
+        targetCameraPosition.set(
           targetPos.x + distance,
-          targetPos.y + distance,
+          targetPos.y + distance * 0.5,
           targetPos.z + distance
         );
-        camera.lookAt(targetPos);
+        targetLookAt.copy(targetPos);
+        isAnimatingCamera = true;
+
+        // disable controls temporarily during animation
+        controls.enabled = false;
       } else {
         selectedPlanet = null;
-        // return to overview view
-        camera.position.set(0, 150, 200);
-        camera.lookAt(0, 0, 0);
+        // return to overview
+        targetCameraPosition.set(0, 150, 200);
+        targetLookAt.set(0, 0, 0);
+        isAnimatingCamera = true;
+        controls.enabled = false;
       }
     }
 
     window.addEventListener('click', onMouseClick);
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
 
     // handle window resize
     function onWindowResize() {
@@ -154,10 +194,8 @@
       planets.forEach(planet => {
         const data = planet.userData;
 
-        // rotation on axis
         planet.rotation.y += data.rotationSpeed;
 
-        // orbit around sun
         if (data.distance > 0) {
           data.angle += data.orbitSpeed;
           planet.position.x = Math.cos(data.angle) * data.distance;
@@ -165,6 +203,33 @@
         }
       });
 
+      // smooth camera animation
+      if (isAnimatingCamera) {
+        camera.position.lerp(targetCameraPosition, 0.05);
+
+        const currentLookAt = new THREE.Vector3();
+        camera.getWorldDirection(currentLookAt);
+        currentLookAt.multiplyScalar(10).add(camera.position);
+        currentLookAt.lerp(targetLookAt, 0.05);
+        camera.lookAt(currentLookAt);
+
+        // check if animation is complete
+        if (camera.position.distanceTo(targetCameraPosition) < 0.5) {
+          isAnimatingCamera = false;
+          controls.enabled = true;
+          controls.target.copy(targetLookAt);
+        }
+      }
+
+      // if a planet is selected, update camera target to follow it
+      if (selectedPlanet && !isAnimatingCamera) {
+        const selectedMesh = planets.find(p => p.userData.key === selectedPlanet.key);
+        if (selectedMesh) {
+          controls.target.copy(selectedMesh.position);
+        }
+      }
+
+      controls.update();
       renderer.render(scene, camera);
     }
 
@@ -172,8 +237,11 @@
 
     // cleanup on component unmount
     return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onMouseClick);
       window.removeEventListener('resize', onWindowResize);
+      controls.dispose();
       renderer.dispose();
     };
   });
@@ -191,6 +259,9 @@
       <li><strong>Mass:</strong> {selectedPlanet.mass}</li>
     </ul>
     <button on:click={() => selectedPlanet = null}>Close</button>
+  </div>
+  <div class="controls-hint">
+    <p>🖱️ Left-click & drag to rotate • Scroll to zoom • Right-click & drag to pan</p>
   </div>
 {/if}
 
@@ -242,5 +313,25 @@
 
   .info-panel button:hover {
     background: #ffc849;
+  }
+
+  .controls-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 5, 20, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  font-size: 0.9rem;
+  }
+  
+  .controls-hint p {
+    margin: 0;
+    opacity: 0.9;
   }
 </style>
