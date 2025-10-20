@@ -57,12 +57,21 @@
     controls.enablePan = true;
 
     // lighting setup
-    const ambientLight = new THREE.AmbientLight(0x333333);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); 
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 2, 500);
+    const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
     pointLight.position.set(0, 0, 0);
     scene.add(pointLight);
+
+    // additional lights for better visibility
+    const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight1.position.set(100, 100, 100);
+    scene.add(fillLight1);
+
+    const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight2.position.set(-100, -100, -100);
+    scene.add(fillLight2);
 
     // stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -82,13 +91,24 @@
     const planets: THREE.Mesh[] = [];
 
     // create celestial bodies
+    const textureLoader = new THREE.TextureLoader();
+
     Object.entries(celestialBodies).forEach(([key, body]) => {
-      const geometry = new THREE.SphereGeometry(body.radius, 32, 32);
-      const material = new THREE.MeshStandardMaterial({
-        color: body.color,
-        emissive: (body as any).emissive || 0x000000,
-        emissiveIntensity: (body as any).emissiveIntensity || 0
-      });
+      const geometry = new THREE.SphereGeometry(body.radius, 64, 64);
+    
+      // load texture if available
+      const material = body.texture 
+        ? new THREE.MeshStandardMaterial({
+            map: textureLoader.load(body.texture),
+            emissive: (body as any).emissive || 0x000000,
+            emissiveIntensity: (body as any).emissiveIntensity || 0
+          })
+        : new THREE.MeshStandardMaterial({
+            color: body.color,
+            emissive: (body as any).emissive || 0x000000,
+            emissiveIntensity: (body as any).emissiveIntensity || 0
+          });
+      
       const mesh = new THREE.Mesh(geometry, material);
 
       // position planets
@@ -101,12 +121,19 @@
       // add rings for Saturn
       if ((body as any).hasRings) {
         const ringGeometry = new THREE.RingGeometry(body.radius * 1.5, body.radius * 2.5, 64);
-        const ringMaterial = new THREE.MeshBasicMaterial({
-          color: 0xc9b291,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.6
-        });
+        const ringMaterial = (body as any).ringTexture
+          ? new THREE.MeshBasicMaterial({
+              map: textureLoader.load((body as any).ringTexture),
+              side: THREE.DoubleSide,
+              transparent: true,
+              opacity: 0.8
+            })
+          : new THREE.MeshBasicMaterial({
+              color: 0xc9b291,
+              side: THREE.DoubleSide,
+              transparent: true,
+              opacity: 0.6
+            });
         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
         ring.rotation.x = Math.PI / 2;
         mesh.add(ring);
@@ -125,7 +152,11 @@
           );
         }
         orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
-        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.3 });
+        const orbitMaterial = new THREE.LineBasicMaterial({ 
+          color: 0x444444, 
+          transparent: true, 
+          opacity: 0.3 
+        });
         const orbit = new THREE.Line(orbitGeometry, orbitMaterial);
         scene.add(orbit);
       }
