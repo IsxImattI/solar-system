@@ -20,6 +20,7 @@
   let showSidebar = false;
   let planets: THREE.Mesh[] = [];
   let sidebarTimeout: any = null;
+  let isMobile = false;
 
   function handleSidebarMouseEnter() {
     if (sidebarTimeout) clearTimeout(sidebarTimeout);
@@ -41,11 +42,24 @@
     isDragging = true;
   }
 
+  function toggleSidebar() {
+    if (isMobile) {
+      showSidebar = !showSidebar;
+    }
+  }
+
   export function getSelectedPlanet() {
     return selectedPlanet;
   }
 
   onMount(() => {
+
+    // check if mobile
+    isMobile = window.innerWidth <= 768;
+
+    window.addEventListener('resize', () => {
+      isMobile = window.innerWidth <= 768;
+    })
     // scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000511);
@@ -334,15 +348,15 @@
 {/if}
 
 <!-- sidebar toggle button -->
-<button class="sidebar-toggle" on:mouseenter={handleSidebarMouseEnter}>ℹ️</button>
+<button class="sidebar-toggle" on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined} on:click={toggleSidebar}>{(isMobile && showSidebar) ? '✕' : 'ℹ️'}</button>
 
 <!-- sidebar panel (always rendered, no {#if}) -->
 <div 
   class="sidebar" 
   class:sidebar-open={showSidebar}
   role="complementary" 
-  on:mouseenter={handleSidebarMouseEnter} 
-  on:mouseleave={handleSidebarMouseLeave}
+  on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined}
+  on:mouseleave={!isMobile ? handleSidebarMouseLeave : undefined}
 >
   <h2>About This Project</h2>
   
@@ -832,12 +846,261 @@
 
 /* responsive */
 @media (max-width: 768px) {
+  /* welcome screen */
+  .welcome-overlay {
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+
+  .welcome-content {
+    padding: 40px 20px;
+  }
+
+  .welcome-content h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+
+  .tagline {
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    margin-bottom: 30px;
+  }
+
   .welcome-features {
     grid-template-columns: 1fr;
+    gap: 20px;
+    margin: 30px 0;
   }
-  
+
+  .feature {
+    padding: 15px;
+  }
+
+  .feature .icon {
+    font-size: 2rem;
+  }
+
+  .start-btn {
+    padding: 12px 30px;
+    font-size: 1rem;
+  }
+
+  /* sidebar */
   .sidebar {
-    width: 280px;
+    width: 85vw;
+    max-width: 320px;
+  }
+
+  .sidebar-toggle {
+    top: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+
+  /* time controls */
+  .time-controls {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .play-pause-btn {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .speed-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .speed-controls button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .speed-indicator {
+    text-align: center;
+    font-size: 0.85rem;
+    min-width: auto;
+  }
+
+  /* info panel */
+  .info-panel {
+    top: auto;
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    padding: 15px;
+  }
+
+  .info-panel h2 {
+    font-size: 1.3rem;
+  }
+
+  /* controls hint */
+  .controls-hint {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    font-size: 0.75rem;
+    padding: 8px 15px;
+  }
+
+  .controls-hint p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  /* welcome Screen */
+  .welcome-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .tagline {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .welcome-features {
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .feature {
+    padding: 12px;
+  }
+
+  .feature .icon {
+    font-size: 1.8rem;
+  }
+
+  .feature h3 {
+    font-size: 1rem;
+  }
+
+  .feature p {
+    font-size: 0.85rem;
+  }
+
+  .start-btn {
+    padding: 10px 25px;
+    font-size: 0.95rem;
+  }
+
+  .credits {
+    font-size: 0.8rem;
+  }
+
+  /* sidebar */
+  .sidebar {
+    width: 90vw;
+    padding: 50px 15px 15px 15px;
+  }
+
+  .sidebar h2 {
+    font-size: 1.3rem;
+  }
+
+  .sidebar-section h3 {
+    font-size: 1rem;
+  }
+
+  .sidebar-section p,
+  .sidebar-section li {
+    font-size: 0.9rem;
+  }
+
+  .planet-list {
+    grid-template-columns: 1fr;
+  }
+
+  .planet-btn {
+    padding: 10px;
+    font-size: 0.95rem;
+  }
+
+  /* time Controls */
+  .time-controls {
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .speed-controls button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+
+  .speed-indicator {
+    font-size: 0.8rem;
+  }
+
+  /* info Panel */
+  .info-panel {
+    bottom: 70px;
+    right: 5px;
+    left: 5px;
+    padding: 12px;
+  }
+
+  .info-panel h2 {
+    font-size: 1.2rem;
+  }
+
+  .info-panel p,
+  .info-panel li {
+    font-size: 0.85rem;
+  }
+
+  .info-panel button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* controls Hint */
+  .controls-hint {
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+  }
+
+  .sidebar-toggle {
+    top: 5px;
+    left: 5px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+}
+
+/* landscape mode on small devices */
+@media (max-height: 500px) and (orientation: landscape) {
+  .time-controls {
+    top: 5px;
+    padding: 5px;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .controls-hint {
+    display: none;
+  }
+
+  .info-panel {
+    bottom: 5px;
+    max-height: 40vh;
+    overflow-y: auto;
   }
 }
 </style>
