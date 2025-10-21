@@ -1,38 +1,86 @@
-# sv
+# 🌌 Interactive Solar System
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+An immersive 3D visualization of our solar system built with SvelteKit and Three.js. Explore the planets with realistic textures, smooth camera controls, and time manipulation.
 
-## Creating a project
+<!-- to do: add a preview screenshot later -->
 
-If you're seeing this, you've probably already done this step. Congrats!
+## ✨ Features
 
+- 🪐 **Realistic Planets** - High-quality NASA textures for all celestial bodies
+- 🎮 **Interactive Controls** - Intuitive mouse/touch controls for exploration
+- ⏱️ **Time Manipulation** - Speed up, slow down, or pause orbital motion
+- 📊 **Detailed Info** - Learn about each planet with comprehensive data panels
+- 🎯 **Quick Navigation** - Jump to any planet instantly from the sidebar
+- 📱 **Fully Responsive** - Optimized for desktop, tablet, and mobile devices
+- 🌟 **Smooth Animations** - Fluid camera transitions and orbital mechanics
+
+## 🚀 Live Demo
+
+ <!-- to do: add your deployment URL -->
+
+## 🛠️ Tech Stack
+
+- **SvelteKit** - Modern web framework
+- **Three.js** - 3D graphics library
+- **TypeScript** - Type-safe development
+- **WebGL** - Hardware-accelerated rendering
+
+## 📦 Installation
 ```sh
-# create a new project in the current directory
-npx sv create
+# clone the repository
+git clone https://github.com/IsxImattI/solar-system.git
 
-# create a new project in my-app
-npx sv create my-app
-```
+# navigate to project directory
+cd solar-system
 
-## Developing
+# install dependencies
+npm install
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+# start development server
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+## 🎮 Controls
 
-To create a production version of your app:
+### Desktop
+- **Left-click + drag** - Rotate view
+- **Scroll wheel** - Zoom in/out
+- **Right-click + drag** - Pan camera
+- **Click planet** - View details and zoom to planet
 
+### Mobile
+- **Touch + drag** - Rotate view
+- **Pinch** - Zoom in/out
+- **Tap planet** - View details
+
+## 🏗️ Building for Production
 ```sh
+# create production build
 npm run build
+
+# preview production build
+npm run preview
 ```
 
-You can preview the production build with `npm run preview`.
+## 📸 Credits
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- **Planet Textures**: [Planet Pixel Emporium](https://planetpixelemporium.com)
+- **3D Library**: [Three.js](https://threejs.org)
+- **Framework**: [SvelteKit](https://kit.svelte.dev)
+
+## 👨‍💻 Author
+
+**Matej Gyergyek**
+- GitHub: [@IsxImattI](https://github.com/IsxImattI)
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+---
+
+Built with ❤️ and ☕
