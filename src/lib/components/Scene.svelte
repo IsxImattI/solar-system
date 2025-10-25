@@ -348,8 +348,9 @@
 {/if}
 
 <!-- sidebar toggle button -->
-<button class="sidebar-toggle" on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined} on:click={toggleSidebar}>{(isMobile && showSidebar) ? '✕' : 'ℹ️'}</button>
-
+<button class="sidebar-toggle" on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined} on:click={toggleSidebar}>
+  {showSidebar ? '✕' : 'ℹ️'}
+</button>
 <!-- sidebar panel (always rendered, no {#if}) -->
 <div 
   class="sidebar" 
@@ -703,17 +704,17 @@
 /* sidebar toggle */
 .sidebar-toggle {
   position: fixed;
-  top: 20px; 
+  top: 20px;
   left: 20px;
   background: rgba(0, 5, 20, 0.9);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.2rem;
-  z-index: 100;
-  transition: all 0.2s;
+  font-size: 1rem;
+  z-index: 101; 
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
 }
 
@@ -729,18 +730,20 @@
   left: 0;
   width: 320px;
   height: 100vh;
+  max-height: 100vh;
   background: rgba(0, 5, 20, 0.95);
   backdrop-filter: blur(10px);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 60px 20px 20px 20px; 
-  overflow-y: auto;
+  padding: 60px 20px 20px 20px;
+  padding-bottom: 120px;
+  overflow-y: scroll; 
   overflow-x: hidden;
   z-index: 99;
   color: white;
   transform: translateX(-100%);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box; 
 }
 
 .sidebar::-webkit-scrollbar {
@@ -898,10 +901,19 @@
   }
 
   .sidebar-toggle {
-    top: 10px;
-    left: 10px;
-    padding: 8px 12px;
-    font-size: 1rem;
+    position: fixed;
+    top: 120px;
+    left: 20px;
+    background: rgba(0, 5, 20, 0.9);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem; 
+    z-index: 100;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
   }
 
   /* time controls */
@@ -1008,8 +1020,22 @@
 
   /* sidebar */
   .sidebar {
-    width: 90vw;
-    padding: 50px 15px 15px 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    background: rgba(0, 5, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 60px 20px 20px 20px; 
+    overflow-y: auto;  
+    overflow-x: hidden;
+    z-index: 99;
+    color: white;
+    transform: translateX(-100%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar h2 {
@@ -1084,10 +1110,19 @@
   }
 
   .sidebar-toggle {
-    top: 5px;
-    left: 5px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    position: fixed;
+    top: 80px; 
+    left: 20px;
+    background: rgba(0, 5, 20, 0.9);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    z-index: 100;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
   }
 }
 
