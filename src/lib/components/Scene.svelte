@@ -59,7 +59,7 @@
 
     window.addEventListener('resize', () => {
       isMobile = window.innerWidth <= 768;
-    })
+    });
     // scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000511);
