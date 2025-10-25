@@ -308,7 +308,7 @@
   });
 </script>
 
-<div bind:this={container} class="scene-container"></div>
+<div bind:this={container} class="scene-container" class:scene-visible={!showWelcome}></div>
 
 <!-- welcome screen -->
 {#if showWelcome}
@@ -457,7 +457,14 @@
   .scene-container {
     width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+  }
+
+  .scene-container.scene-visible {
+    visibility: visible;
   }
 
   .info-panel {
