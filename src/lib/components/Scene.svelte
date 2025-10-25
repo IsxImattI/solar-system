@@ -48,10 +48,6 @@
     }
   }
 
-  export function getSelectedPlanet() {
-    return selectedPlanet;
-  }
-
   onMount(() => {
 
     // check if mobile
