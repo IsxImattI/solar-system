@@ -423,6 +423,11 @@
   on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined}
   on:mouseleave={!isMobile ? handleSidebarMouseLeave : undefined}
 >
+
+  {#if isMobile}
+    <button class="sidebar-close" on:click={toggleSidebar}>✕</button>
+  {/if}
+
   <h2>About This Project</h2>
   
   <div class="sidebar-section">
@@ -788,6 +793,37 @@
   color: #000;
 }
 
+
+.sidebar-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 107, 107, 0.2);
+  color: white;
+  border: 1px solid #ff6b6b;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 152;
+  transition: all 0.2s;
+}
+
+.sidebar-close:hover {
+  background: rgba(255, 107, 107, 0.4);
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .sidebar-close {
+    display: flex;
+  }
+}
+
 /* sidebar */
 .sidebar {
   position: fixed;
@@ -960,63 +996,75 @@
   }
 
   /* sidebar */
-  .sidebar {
-    width: 85vw;
-    max-width: 320px;
+    .sidebar {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    padding: 80px 30px 30px 30px;
+    z-index: 150;
+  }
+
+  .sidebar:hover {
+    transform: translateX(-100%);
   }
 
   .sidebar-toggle {
     position: fixed;
-    top: 120px;
+    top: 80px;
     left: 20px;
     background: rgba(0, 5, 20, 0.9);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 6px 10px;
+    padding: 10px 15px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem; 
-    z-index: 100;
+    font-size: 1.2rem;
+    z-index: 151;
     transition: all 0.2s;
     backdrop-filter: blur(10px);
   }
 
+
   /* time controls */
+
   .time-controls {
     top: 10px;
     left: 10px;
     right: 10px;
     transform: none;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
     gap: 10px;
-    padding: 10px;
+    padding: 10px 15px;
+    border-radius: 15px;
   }
 
   .play-pause-btn {
-    width: 100%;
-    font-size: 1rem;
+    padding: 8px 16px;
+    font-size: 1.2rem;
   }
 
   .speed-controls {
-    width: 100%;
-    justify-content: space-between;
+    gap: 8px;
   }
 
   .speed-controls button {
-    padding: 5px 10px;
-    font-size: 0.8rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
   }
 
   .speed-indicator {
-    text-align: center;
-    font-size: 0.85rem;
-    min-width: auto;
+    font-size: 0.9rem;
+    min-width: 45px;
   }
 
+
   /* info panel */
+
   .info-panel {
     top: auto;
-    bottom: 80px;
+    bottom: 60px;
     right: 10px;
     left: 10px;
     max-width: none;
@@ -1028,18 +1076,16 @@
   }
 
   /* controls hint */
+
   .controls-hint {
     bottom: 10px;
     left: 10px;
     right: 10px;
     transform: none;
-    font-size: 0.75rem;
-    padding: 8px 15px;
+    font-size: 0.7rem;
+    padding: 8px 12px;
   }
 
-  .controls-hint p {
-    margin: 0;
-  }
 }
 
 @media (max-width: 480px) {
@@ -1085,35 +1131,14 @@
 
   /* sidebar */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 320px;
-    height: 100vh;
-    background: rgba(0, 5, 20, 0.95);
-    backdrop-filter: blur(10px);
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 60px 20px 20px 20px; 
-    overflow-y: auto;  
-    overflow-x: hidden;
-    z-index: 99;
-    color: white;
-    transform: translateX(-100%);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    -webkit-overflow-scrolling: touch;
+    padding: 70px 25px 25px 25px;
   }
 
-  .sidebar h2 {
-    font-size: 1.3rem;
-  }
-
-  .sidebar-section h3 {
-    font-size: 1rem;
-  }
-
-  .sidebar-section p,
-  .sidebar-section li {
-    font-size: 0.9rem;
+  .sidebar-toggle {
+    top: 70px;
+    left: 15px;
+    padding: 8px 12px;
+    font-size: 1.1rem;
   }
 
   .planet-list {
@@ -1126,26 +1151,34 @@
   }
 
   /* time Controls */
-  .time-controls {
+
+   .time-controls {
     top: 5px;
     left: 5px;
     right: 5px;
-    padding: 8px;
+    padding: 8px 12px;
     gap: 8px;
   }
 
+  .play-pause-btn {
+    padding: 6px 12px;
+    font-size: 1rem;
+  }
+
   .speed-controls button {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 
   .speed-indicator {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    min-width: 40px;
   }
 
   /* info Panel */
-  .info-panel {
-    bottom: 70px;
+    .info-panel {
+    bottom: 50px;
     right: 5px;
     left: 5px;
     padding: 12px;
@@ -1161,17 +1194,17 @@
   }
 
   .info-panel button {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+    padding: 8px 16px;
+    font-size: 0.9rem;
   }
 
   /* controls Hint */
-  .controls-hint {
+   .controls-hint {
     bottom: 5px;
     left: 5px;
     right: 5px;
-    padding: 6px 12px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+    font-size: 0.65rem;
   }
 
   .sidebar-toggle {
