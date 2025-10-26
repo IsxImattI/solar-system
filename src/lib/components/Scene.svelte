@@ -22,6 +22,11 @@
   let sidebarTimeout: any = null;
   let isMobile = false;
 
+  const keyState: { [key: string]: boolean } = {};
+  const moveSpeed = 2;
+  const cameraVelocity = new THREE.Vector3();
+  const cameraDamping = 0.9;
+
   function handleSidebarMouseEnter() {
     if (sidebarTimeout) clearTimeout(sidebarTimeout);
     showSidebar = true;
@@ -45,6 +50,22 @@
   function toggleSidebar() {
     if (isMobile) {
       showSidebar = !showSidebar;
+    }
+  }
+
+  function onKeyDown(event: KeyboardEvent) {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
+      keyState[key] = true;
+      event.preventDefault();
+    }
+  }
+
+  function onKeyUp(event: KeyboardEvent) {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
+      keyState[key] = false;
+      event.preventDefault();
     }
   }
 
@@ -232,6 +253,50 @@
     window.addEventListener('click', onMouseClick);
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    function updateCameraMovement() {
+      const moveDirection = new THREE.Vector3();
+
+      if (keyState['w']) moveDirection.z -= 1;
+      if (keyState['s']) moveDirection.z += 1;
+      if (keyState['a']) moveDirection.x -= 1;
+      if (keyState['d']) moveDirection.x += 1;
+
+      if (moveDirection.length() > 0) {
+        moveDirection.normalize();
+
+        const cameraDirection = new THREE.Vector3();
+        camera.getWorldDirection(cameraDirection);
+
+        const right = new THREE.Vector3();
+        right.crossVectors(cameraDirection, camera.up).normalize();
+
+        const forward = new THREE.Vector3();
+        forward.crossVectors(camera.up, right).normalize();
+
+        const movement = new THREE.Vector3();
+        movement.addScaledVector(right, moveDirection.x * moveSpeed);
+        movement.addScaledVector(forward, -moveDirection.z * moveSpeed);
+
+        cameraVelocity.add(movement);
+      }
+
+      cameraVelocity.multiplyScalar(cameraDamping);
+
+      if (cameraVelocity.length() > 0.01) {
+        camera.position.add(cameraVelocity);
+        controls.target.add(cameraVelocity);
+
+        if (isAnimatingCamera && (keyState['w'] || keyState['a'] || keyState['s'] || keyState['d'])) {
+          isAnimatingCamera = false;
+          controls.enabled = true;
+        }
+      } else {
+        cameraVelocity.set(0, 0, 0);
+      }
+    }
 
     // handle window resize
     function onWindowResize() {
@@ -287,6 +352,7 @@
       }
 
       controls.update();
+      updateCameraMovement();
       renderer.render(scene, camera);
     }
 
@@ -298,6 +364,8 @@
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onMouseClick);
       window.removeEventListener('resize', onWindowResize);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
       controls.dispose();
       renderer.dispose();
     };
