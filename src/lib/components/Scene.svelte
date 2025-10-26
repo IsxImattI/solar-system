@@ -508,14 +508,10 @@
   </button>
   
   <div class="speed-controls">
-    <button on:click={() => timeSpeed = 0.5} class:active={timeSpeed === 0.5}>0.5x</button>
-    <button on:click={() => timeSpeed = 1} class:active={timeSpeed === 1}>1x</button>
-    <button on:click={() => timeSpeed = 2} class:active={timeSpeed === 2}>2x</button>
-    <button on:click={() => timeSpeed = 5} class:active={timeSpeed === 5}>5x</button>
-    <button on:click={() => timeSpeed = 10} class:active={timeSpeed === 10}>10x</button>
+    <button on:click={() => timeSpeed = Math.max(0.1, timeSpeed - 0.5)}>-</button>
+    <span class="speed-indicator">{timeSpeed.toFixed(1)}x</span>
+    <button on:click={() => timeSpeed = Math.min(10, timeSpeed + 0.5)}>+</button>
   </div>
-  
-  <span class="speed-indicator">Speed: {timeSpeed}x {isPaused ? '(Paused)' : ''}</span>
  </div>
 
 <style>
@@ -595,7 +591,8 @@
     opacity: 0.9;
   }
 
-  .time-controls {
+  /* time controls */
+.time-controls {
   position: fixed;
   top: 20px;
   left: 50%;
@@ -604,57 +601,61 @@
   gap: 15px;
   align-items: center;
   background: rgba(0, 5, 20, 0.9);
-  padding: 15px 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  padding: 15px 25px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 98;
 }
 
 .play-pause-btn {
-  background: #fdb813;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
+  background: rgba(253, 184, 19, 0.2);
+  color: white;
+  border: 1px solid #fdb813;
+  padding: 8px 20px;
+  border-radius: 25px;
   cursor: pointer;
-  font-size: 1.2rem;
-  transition: background 0.2s;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .play-pause-btn:hover {
-  background: #ffc849;
+  background: rgba(253, 184, 19, 0.4);
+  transform: scale(1.05);
 }
 
 .speed-controls {
   display: flex;
-  gap: 5px;
+  gap: 10px;
+  align-items: center;
 }
 
 .speed-controls button {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 12px;
-  border-radius: 5px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 
 .speed-controls button:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.speed-controls button.active {
-  background: #fdb813;
-  border-color: #fdb813;
-  font-weight: bold;
+  transform: scale(1.1);
 }
 
 .speed-indicator {
   color: white;
-  font-size: 0.9rem;
-  min-width: 120px;
+  font-size: 1rem;
+  min-width: 50px;
+  text-align: center;
+  font-weight: bold;
 }
 
 /* welcome screen */
