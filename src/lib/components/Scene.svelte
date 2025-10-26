@@ -22,6 +22,11 @@
   let sidebarTimeout: any = null;
   let isMobile = false;
 
+  const keyState: { [key: string]: boolean } = {};
+  const moveSpeed = 2;
+  const cameraVelocity = new THREE.Vector3();
+  const cameraDamping = 0.9;
+
   function handleSidebarMouseEnter() {
     if (sidebarTimeout) clearTimeout(sidebarTimeout);
     showSidebar = true;
@@ -45,6 +50,22 @@
   function toggleSidebar() {
     if (isMobile) {
       showSidebar = !showSidebar;
+    }
+  }
+
+  function onKeyDown(event: KeyboardEvent) {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
+      keyState[key] = true;
+      event.preventDefault();
+    }
+  }
+
+  function onKeyUp(event: KeyboardEvent) {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
+      keyState[key] = false;
+      event.preventDefault();
     }
   }
 
@@ -232,6 +253,50 @@
     window.addEventListener('click', onMouseClick);
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    function updateCameraMovement() {
+      const moveDirection = new THREE.Vector3();
+
+      if (keyState['w']) moveDirection.z -= 1;
+      if (keyState['s']) moveDirection.z += 1;
+      if (keyState['a']) moveDirection.x -= 1;
+      if (keyState['d']) moveDirection.x += 1;
+
+      if (moveDirection.length() > 0) {
+        moveDirection.normalize();
+
+        const cameraDirection = new THREE.Vector3();
+        camera.getWorldDirection(cameraDirection);
+
+        const right = new THREE.Vector3();
+        right.crossVectors(cameraDirection, camera.up).normalize();
+
+        const forward = new THREE.Vector3();
+        forward.crossVectors(camera.up, right).normalize();
+
+        const movement = new THREE.Vector3();
+        movement.addScaledVector(right, moveDirection.x * moveSpeed);
+        movement.addScaledVector(forward, -moveDirection.z * moveSpeed);
+
+        cameraVelocity.add(movement);
+      }
+
+      cameraVelocity.multiplyScalar(cameraDamping);
+
+      if (cameraVelocity.length() > 0.01) {
+        camera.position.add(cameraVelocity);
+        controls.target.add(cameraVelocity);
+
+        if (isAnimatingCamera && (keyState['w'] || keyState['a'] || keyState['s'] || keyState['d'])) {
+          isAnimatingCamera = false;
+          controls.enabled = true;
+        }
+      } else {
+        cameraVelocity.set(0, 0, 0);
+      }
+    }
 
     // handle window resize
     function onWindowResize() {
@@ -287,6 +352,7 @@
       }
 
       controls.update();
+      updateCameraMovement();
       renderer.render(scene, camera);
     }
 
@@ -298,6 +364,8 @@
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onMouseClick);
       window.removeEventListener('resize', onWindowResize);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
       controls.dispose();
       renderer.dispose();
     };
@@ -355,6 +423,11 @@
   on:mouseenter={!isMobile ? handleSidebarMouseEnter : undefined}
   on:mouseleave={!isMobile ? handleSidebarMouseLeave : undefined}
 >
+
+  {#if isMobile}
+    <button class="sidebar-close" on:click={toggleSidebar}>✕</button>
+  {/if}
+
   <h2>About This Project</h2>
   
   <div class="sidebar-section">
@@ -440,14 +513,10 @@
   </button>
   
   <div class="speed-controls">
-    <button on:click={() => timeSpeed = 0.5} class:active={timeSpeed === 0.5}>0.5x</button>
-    <button on:click={() => timeSpeed = 1} class:active={timeSpeed === 1}>1x</button>
-    <button on:click={() => timeSpeed = 2} class:active={timeSpeed === 2}>2x</button>
-    <button on:click={() => timeSpeed = 5} class:active={timeSpeed === 5}>5x</button>
-    <button on:click={() => timeSpeed = 10} class:active={timeSpeed === 10}>10x</button>
+    <button on:click={() => timeSpeed = Math.max(0.1, timeSpeed - 0.5)}>-</button>
+    <span class="speed-indicator">{timeSpeed.toFixed(1)}x</span>
+    <button on:click={() => timeSpeed = Math.min(10, timeSpeed + 0.5)}>+</button>
   </div>
-  
-  <span class="speed-indicator">Speed: {timeSpeed}x {isPaused ? '(Paused)' : ''}</span>
  </div>
 
 <style>
@@ -527,7 +596,8 @@
     opacity: 0.9;
   }
 
-  .time-controls {
+  /* time controls */
+.time-controls {
   position: fixed;
   top: 20px;
   left: 50%;
@@ -536,57 +606,61 @@
   gap: 15px;
   align-items: center;
   background: rgba(0, 5, 20, 0.9);
-  padding: 15px 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  padding: 15px 25px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 98;
 }
 
 .play-pause-btn {
-  background: #fdb813;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
+  background: rgba(253, 184, 19, 0.2);
+  color: white;
+  border: 1px solid #fdb813;
+  padding: 8px 20px;
+  border-radius: 25px;
   cursor: pointer;
-  font-size: 1.2rem;
-  transition: background 0.2s;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .play-pause-btn:hover {
-  background: #ffc849;
+  background: rgba(253, 184, 19, 0.4);
+  transform: scale(1.05);
 }
 
 .speed-controls {
   display: flex;
-  gap: 5px;
+  gap: 10px;
+  align-items: center;
 }
 
 .speed-controls button {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 12px;
-  border-radius: 5px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 
 .speed-controls button:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.speed-controls button.active {
-  background: #fdb813;
-  border-color: #fdb813;
-  font-weight: bold;
+  transform: scale(1.1);
 }
 
 .speed-indicator {
   color: white;
-  font-size: 0.9rem;
-  min-width: 120px;
+  font-size: 1rem;
+  min-width: 50px;
+  text-align: center;
+  font-weight: bold;
 }
 
 /* welcome screen */
@@ -717,6 +791,37 @@
 .sidebar-toggle:hover {
   background: rgba(253, 184, 19, 0.9);
   color: #000;
+}
+
+
+.sidebar-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 107, 107, 0.2);
+  color: white;
+  border: 1px solid #ff6b6b;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 152;
+  transition: all 0.2s;
+}
+
+.sidebar-close:hover {
+  background: rgba(255, 107, 107, 0.4);
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .sidebar-close {
+    display: flex;
+  }
 }
 
 /* sidebar */
@@ -891,63 +996,75 @@
   }
 
   /* sidebar */
-  .sidebar {
-    width: 85vw;
-    max-width: 320px;
+    .sidebar {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    padding: 80px 30px 30px 30px;
+    z-index: 150;
+  }
+
+  .sidebar:hover {
+    transform: translateX(-100%);
   }
 
   .sidebar-toggle {
     position: fixed;
-    top: 120px;
+    top: 80px;
     left: 20px;
     background: rgba(0, 5, 20, 0.9);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 6px 10px;
+    padding: 10px 15px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem; 
-    z-index: 100;
+    font-size: 1.2rem;
+    z-index: 151;
     transition: all 0.2s;
     backdrop-filter: blur(10px);
   }
 
+
   /* time controls */
+
   .time-controls {
     top: 10px;
     left: 10px;
     right: 10px;
     transform: none;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
     gap: 10px;
-    padding: 10px;
+    padding: 10px 15px;
+    border-radius: 15px;
   }
 
   .play-pause-btn {
-    width: 100%;
-    font-size: 1rem;
+    padding: 8px 16px;
+    font-size: 1.2rem;
   }
 
   .speed-controls {
-    width: 100%;
-    justify-content: space-between;
+    gap: 8px;
   }
 
   .speed-controls button {
-    padding: 5px 10px;
-    font-size: 0.8rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
   }
 
   .speed-indicator {
-    text-align: center;
-    font-size: 0.85rem;
-    min-width: auto;
+    font-size: 0.9rem;
+    min-width: 45px;
   }
 
+
   /* info panel */
+
   .info-panel {
     top: auto;
-    bottom: 80px;
+    bottom: 60px;
     right: 10px;
     left: 10px;
     max-width: none;
@@ -959,18 +1076,16 @@
   }
 
   /* controls hint */
+
   .controls-hint {
     bottom: 10px;
     left: 10px;
     right: 10px;
     transform: none;
-    font-size: 0.75rem;
-    padding: 8px 15px;
+    font-size: 0.7rem;
+    padding: 8px 12px;
   }
 
-  .controls-hint p {
-    margin: 0;
-  }
 }
 
 @media (max-width: 480px) {
@@ -1016,35 +1131,14 @@
 
   /* sidebar */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 320px;
-    height: 100vh;
-    background: rgba(0, 5, 20, 0.95);
-    backdrop-filter: blur(10px);
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 60px 20px 20px 20px; 
-    overflow-y: auto;  
-    overflow-x: hidden;
-    z-index: 99;
-    color: white;
-    transform: translateX(-100%);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    -webkit-overflow-scrolling: touch;
+    padding: 70px 25px 25px 25px;
   }
 
-  .sidebar h2 {
-    font-size: 1.3rem;
-  }
-
-  .sidebar-section h3 {
-    font-size: 1rem;
-  }
-
-  .sidebar-section p,
-  .sidebar-section li {
-    font-size: 0.9rem;
+  .sidebar-toggle {
+    top: 70px;
+    left: 15px;
+    padding: 8px 12px;
+    font-size: 1.1rem;
   }
 
   .planet-list {
@@ -1057,26 +1151,34 @@
   }
 
   /* time Controls */
-  .time-controls {
+
+   .time-controls {
     top: 5px;
     left: 5px;
     right: 5px;
-    padding: 8px;
+    padding: 8px 12px;
     gap: 8px;
   }
 
+  .play-pause-btn {
+    padding: 6px 12px;
+    font-size: 1rem;
+  }
+
   .speed-controls button {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 
   .speed-indicator {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    min-width: 40px;
   }
 
   /* info Panel */
-  .info-panel {
-    bottom: 70px;
+    .info-panel {
+    bottom: 50px;
     right: 5px;
     left: 5px;
     padding: 12px;
@@ -1092,17 +1194,17 @@
   }
 
   .info-panel button {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+    padding: 8px 16px;
+    font-size: 0.9rem;
   }
 
   /* controls Hint */
-  .controls-hint {
+   .controls-hint {
     bottom: 5px;
     left: 5px;
     right: 5px;
-    padding: 6px 12px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+    font-size: 0.65rem;
   }
 
   .sidebar-toggle {
